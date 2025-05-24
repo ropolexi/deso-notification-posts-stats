@@ -27,7 +27,6 @@ myenv\Scripts\activate.bat
 
 pip install -r requirements.txt
 
-python deso_sdk.py
 
 # Run the app
 python notification_check_deso.py
