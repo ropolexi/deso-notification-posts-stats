@@ -13,13 +13,21 @@ This script uses deso_sdk.py from https://github.com/deso-protocol/deso-python-s
 7. Follow
 
 # Install required libraries
-python3 -m venv myenv
+Needs Python3
+
+python -m venv myenv
+
+Linux:
 
 source myenv/bin/activate
 
+Windows:
+
+myenv\Scripts\activate.bat
+
 pip install -r requirements.txt
 
-python3 deso_sdk.py
+python deso_sdk.py
 
 # Run the app
 python notification_check_deso.py
