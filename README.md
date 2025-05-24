@@ -3,6 +3,9 @@ Python script to calculate user score based on post engagement via notification 
 
 This script uses deso_sdk.py from https://github.com/deso-protocol/deso-python-sdk
 
+# Attention
+For this script you need the seed hex of the account you want to post the reply with the answer. Handle with care. Use this code at your own risk. Better create a seperate account with less amount just for the post fees.
+
 ## Features
 1. comments
 2. diamonds (diamondapp 💎 & Focus app 💎)
