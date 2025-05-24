@@ -1,5 +1,5 @@
 # Introduction
-Python script to calculate user score based on post engagement via notification method
+Python script to calculate user score based on post engagement. Any user just need to mention the account username to trigger the calculation and post the reply.
 
 This script uses deso_sdk.py from https://github.com/deso-protocol/deso-python-sdk
 
