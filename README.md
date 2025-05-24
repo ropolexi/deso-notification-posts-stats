@@ -1,6 +1,8 @@
 # Introduction
 Python script to calculate user score based on post engagement via notification method
 
+This script uses deso_sdk.py from https://github.com/deso-protocol/deso-python-sdk
+
 ## Features
 1. comments
 2. diamonds (diamondapp 💎 & Focus app 💎)
@@ -11,7 +13,13 @@ Python script to calculate user score based on post engagement via notification 
 7. Follow
 
 # Install required libraries
+python3 -m venv myenv
+
+source myenv/bin/activate
+
 pip install -r requirements.txt
+
+python3 deso_sdk.py
 
 # Run the app
 python notification_check_deso.py
