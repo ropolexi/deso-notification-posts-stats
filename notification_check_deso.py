@@ -636,49 +636,53 @@ def notificationListener():
         post_id_list=result["post_ids"]
 
     while not app_close:
-        lastIndex=-1
-        currentIndex=-1
-        if result:=load_from_json("notificationLastIndex.json"):
-            lastIndex=result["index"]
-        print(f"lastIndex:{lastIndex}")
-        first=True
-        i=0
+        try:
+            lastIndex=-1
+            currentIndex=-1
+            if result:=load_from_json("notificationLastIndex.json"):
+                lastIndex=result["index"]
+            print(f"lastIndex:{lastIndex}")
+            first=True
+            i=0
 
-        while i<10:#max 10 iteration, total 200 notifications check untill last check index
-            i +=1 
-            print(f"currentIndex:{currentIndex}")
-            result=get_notifications(profile["Profile"]["PublicKeyBase58Check"],FetchStartIndex=currentIndex,NumToFetch=20,FilteredOutNotificationCategories={"dao coin":True,"user association":True, "post association":True,"post":False,"dao":True,"nft":True,"follow":True,"like":True,"diamond":True,"transfer":True})
-            for notification in result["Notifications"]:
-            
-                currentIndex = notification["Index"]
-                if first:
-                    first=False
-                    save_to_json({"index":notification["Index"]},"notificationLastIndex.json")
-                        
-                for affectedkeys in notification["Metadata"]["AffectedPublicKeys"]:
-                    if affectedkeys["Metadata"]=="MentionedPublicKeyBase58Check":
-                        if affectedkeys["PublicKeyBase58Check"]==profile["Profile"]["PublicKeyBase58Check"]:
-                            postId=notification["Metadata"]["SubmitPostTxindexMetadata"]["PostHashBeingModifiedHex"]
-                            if postId in post_id_list:
-                                break
-                            else:
-                                post_id_list.append(postId)
-                                print(postId)
-                                transactor=notification["Metadata"]["TransactorPublicKeyBase58Check"]
-                                r=get_single_profile("",transactor)
-                                username= r["Profile"]["Username"]
-                                print(username)
-                                button_click(username,"",20,10,postIdToPost=postId)
+            while i<10:#max 10 iteration, total 200 notifications check untill last check index
+                i +=1 
+                print(f"currentIndex:{currentIndex}")
+                result=get_notifications(profile["Profile"]["PublicKeyBase58Check"],FetchStartIndex=currentIndex,NumToFetch=20,FilteredOutNotificationCategories={"dao coin":True,"user association":True, "post association":True,"post":False,"dao":True,"nft":True,"follow":True,"like":True,"diamond":True,"transfer":True})
+                for notification in result["Notifications"]:
+                
+                    currentIndex = notification["Index"]
+                    if first:
+                        first=False
+                        save_to_json({"index":notification["Index"]},"notificationLastIndex.json")
+                            
+                    for affectedkeys in notification["Metadata"]["AffectedPublicKeys"]:
+                        if affectedkeys["Metadata"]=="MentionedPublicKeyBase58Check":
+                            if affectedkeys["PublicKeyBase58Check"]==profile["Profile"]["PublicKeyBase58Check"]:
+                                postId=notification["Metadata"]["SubmitPostTxindexMetadata"]["PostHashBeingModifiedHex"]
+                                if postId in post_id_list:
+                                    break
+                                else:
+                                    post_id_list.append(postId)
+                                    print(postId)
+                                    transactor=notification["Metadata"]["TransactorPublicKeyBase58Check"]
+                                    r=get_single_profile("",transactor)
+                                    username= r["Profile"]["Username"]
+                                    print(username)
+                                    button_click(username,"",20,10,postIdToPost=postId)
 
-                                break
-            if currentIndex<=lastIndex:
-                break
+                                    break
+                if currentIndex<=lastIndex:
+                    break
 
-        save_to_json({"post_ids":post_id_list},"postIdList.json")
-        for _ in range(NOTIFICATION_UPDATE_INTERVEL):
+            save_to_json({"post_ids":post_id_list},"postIdList.json")
+            for _ in range(NOTIFICATION_UPDATE_INTERVEL):
+                time.sleep(1)
+                if app_close: 
+                    return
+        except Exception as e:
+            print(e)
             time.sleep(1)
-            if app_close: 
-                return
 
 notificationListener()
     
