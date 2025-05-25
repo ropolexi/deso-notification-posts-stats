@@ -8,6 +8,8 @@ from deso_sdk  import base58_check_encode
 import argparse
 from pprint import pprint
 import datetime
+import re
+
 blacklist = ["greenwork32","globalnetwork22"]  #bots accounts username list
 
 BASE_URL = "https://node.deso.org"
@@ -570,6 +572,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     else:
         body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n"
     body +="All Users: "+str(len(user_scores1))+"\n"+ \
+    "Posts Count: "+str(len(last_posts))+"\n"+ \
     "Comments Count: "+str(info.get("comments_count",0))+"\n"+ \
     "💎 Count: "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
     "💎💎 Count: "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
@@ -668,6 +671,21 @@ def button_click(user,post_hash,entry_number_of_posts,number_top_users,days,post
     except Exception as e:
         print(f"Error: {e}")  # Display error if something goes wrong
 
+def extract_days_and_top_users(text):
+    # Pattern to extract days (e.g., "in 30 days", "last 7 days")
+    days_pattern = r'\b(?:in|last|over|within)?\s*(\d+)\s*days?\b'
+    # Pattern to extract top users (e.g., "top 5 users", "top 3")
+    top_users_pattern = r'\btop\s+(\d+)(?:\s+users)?\b'
+
+    days_matches = re.findall(days_pattern, text, re.IGNORECASE)
+    top_users_matches = re.findall(top_users_pattern, text, re.IGNORECASE)
+
+    # Convert to integers and return the first match if available
+    days = int(days_matches[0]) if days_matches else None
+    top_users = int(top_users_matches[0]) if top_users_matches else None
+
+    return days, top_users
+      
 def notificationListener(posts_to_scan,top_user_limit,days):
     profile=get_single_profile("",bot_public_key)
     post_id_list=[]
@@ -714,8 +732,24 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                                     transactor=notification["Metadata"]["TransactorPublicKeyBase58Check"]
                                     r=get_single_profile("",transactor)
                                     username= r["Profile"]["Username"]
+                                    mentioned_post = get_single_post(postId,bot_public_key)
+                                    body=mentioned_post["Body"]
+                                   
+                                    
                                     print(username)
-                                    button_click(username,"",posts_to_scan,top_user_limit,days,postIdToPost=postId)
+                                    print(body)
+                                    days, top_users = extract_days_and_top_users(body)
+                                    print(f"Days: {days}, Top Users: {top_users}")
+                                    if days>365:
+                                        days=365
+                                    if days<0:
+                                        days=0
+
+                                    if top_users>100:
+                                        top_users=100
+                                    if top_users<=0:
+                                        top_users=10
+                                    button_click(username,"",posts_to_scan,top_users,days,postIdToPost=postId)
 
                                     break
                 if currentIndex<=lastIndex:
