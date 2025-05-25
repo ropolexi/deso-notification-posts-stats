@@ -1,5 +1,5 @@
 # Introduction
-Python script to calculate users score based on their post engagement on a specific user for the last 20 posts. Any user just need to mention @mypostsinfo (my test account's username) to trigger the calculation and post the reply.
+Python script to calculate users score based on their post engagement on a specific user for the last number of posts. Any user just need to mention @mypostsinfo (my test account's username) to trigger the calculation and post the reply.
 
 This script uses deso_sdk.py from https://github.com/deso-protocol/deso-python-sdk
 
