@@ -40,6 +40,18 @@ Last 7 days
 
 python notification_check_deso.py -d 7 -t 10
 
+# Help
+usage: notification_check_deso.py [-h] [-p POSTS] [-d DAYS] [-t TOP]
+
+Performs deso posts calculation
+
+options:
+  -h, --help            show this help message and exit
+  -p POSTS, --posts POSTS
+                        Number of posts to check
+  -d DAYS, --days DAYS  past days
+  -t TOP, --top TOP     Top users limit,max days:365
+  
 ## How I measure post engagement
 ➕ Follow = 100pts
 
