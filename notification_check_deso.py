@@ -628,13 +628,17 @@ def load_from_json(filename):
     print(f"Error loading from file: {e}")
     return None
 
-def button_click(user,post_hash,entry_number_of_posts,number_top_users,days=0,postIdToPost=""):
+def button_click(user,post_hash,entry_number_of_posts,number_top_users,days,postIdToPost=""):
     global calculation_thread,stop_flag
     try:
                 
         while( calculation_thread and calculation_thread.is_alive()):
             print("Existing calculation is running. waiting...")
-            time.sleep(1)    
+            time.sleep(1)  
+        entry_number_of_posts = int(entry_number_of_posts)  
+        number_top_users = int(number_top_users)
+        days=int(days)
+
 
         if len(user)==0:
             print(text="Username Empty")
