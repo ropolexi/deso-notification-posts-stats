@@ -40,6 +40,12 @@ Last 7 days
 
 python notification_check_deso.py -d 7 -t 10
 
+Use the following format when writing the post.
+
+@mypostsinfo top 10 users over the last 100 days
+
+If the user does not provide days and top users limit it will use the values given when starting the app
+
 # Help
 usage: notification_check_deso.py [-h] [-p POSTS] [-d DAYS] [-t TOP]
 
