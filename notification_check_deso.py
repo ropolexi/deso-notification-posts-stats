@@ -229,8 +229,6 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
     if single_post_details and single_post_details["Comments"]:
         comment_index=1
         for comment in single_post_details["Comments"]:
-            comments_size = len(single_post_details["Comments"])
-            #result_steps.config(text=f"Fetching comments...({comment_index}/{comments_size})")
             comment_index +=1
             timestamp = comment["TimestampNanos"]
             username = comment["ProfileEntryResponse"]["Username"]
@@ -240,7 +238,7 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
             print(f"  Comment by: {username}")
             body = comment["Body"]
             info["comments_count"] = info.get("comments_count",0) + 1
-            print(f"  Comment : {body}")
+            #print(f"  Comment : {body}")
             post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
             
             post_comments_body[post_hash_hex]["comments"][username]={}
@@ -258,7 +256,7 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
                     print(f"    Comment by: {username}")
                     body = comment["Body"]
                     info["comments_count"] = info.get("comments_count",0) + 1
-                    print(f"    Comment : {body}")
+                    #print(f"    Comment : {body}")
                     post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
                     post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
 
@@ -272,11 +270,11 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
                             print(f"        Comment by: {username}")
                             body = comment["Body"]
                             info["comments_count"] = info.get("comments_count",0) + 1
-                            print(f"        Comment : {body}")
+                            #print(f"        Comment : {body}")
                             post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
                             post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
         get_first_commenter(post_scores,post_hash_hex)
-        print(info)
+        #print(info)
 def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores,info):
     if diamond_sender_details := get_diamonds(post_hash_hex, user_public_key):
         diamond_index=1
@@ -552,7 +550,8 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
             except Exception as e:
                 print(f"Error processing {username}: {e}")
 
-
+    #print("post_scores")
+    #print(post_scores)
     user_scores1 = calculate_user_category_scores(post_scores)
     username_follow={}
     username_follow = update_following(user_scores1,username_publickey,user_public_key,username_follow)
@@ -562,7 +561,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
 
     print("\nusername_follow:")
     print(username_follow)
-
+    total_users_followed=int(sum(username_follow.values())/FOLLOW_SCORE)
     # Combine the data
     combined_data = combine_data(user_scores1, username_follow,username)
 
@@ -570,25 +569,26 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     top_10 = sorted_data[:number_top_users]
     stop_flag = True
     if days>0:
-        body=username + " Last "+str(days)+" Days Information\n"
+        body="User Engagement Metrics for "+username + "'s Posts Over The Last "+str(days)+" Days\n\n"
     else:
-        body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n"
-    body +="All Users Engaged on Your Posts: "+str(len(user_scores1))+"\n"+ \
-    "Your Posts Count: "+str(len(last_posts))+"\n"+ \
-    "Comments by Users: "+str(info.get("comments_count",0))+"\n"+ \
-    "💎 Count: "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
-    "💎💎 Count: "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
-    "💎💎💎 Count: "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
-    "💎💎💎💎 Count: "+str(info.get("diamonds_lvl4_count",0))+"\n"+ \
-    "💎💎💎💎💎 Count: "+str(info.get("diamonds_lvl5_count",0))+"\n"+ \
-    "💎💎💎💎💎💎 Count: "+str(info.get("diamonds_lvl6_count",0))+"\n"+ \
-    "Reposts by Users: "+str(info.get("reposts_count",0))+"\n"+ \
-    "Quote Reposts by Users: "+str(info.get("quote_reposts_count",0))+"\n"+ \
-    "Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
-    "Polls by Users: "+str(info.get("polls_count",0))+"\n\n"
+        body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n\n"
+    body +="👤 All Users Engaged on Your Posts: "+str(len(user_scores1))+"\n"+ \
+    "➕ Followers Engaged on Your Posts: "+str(total_users_followed)+"\n"+ \
+    "📝 Your Posts Count: "+str(len(last_posts))+"\n"+ \
+    "💬 Comments by Users: "+str(info.get("comments_count",0))+"\n"+ \
+    "🔁 Reposts by Users: "+str(info.get("reposts_count",0))+"\n"+ \
+    "📢 Quote Reposts by Users: "+str(info.get("quote_reposts_count",0))+"\n"+ \
+    "❤️ Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
+    "📊 Poll Participants: "+str(info.get("polls_count",0))+"\n\n"+ \
+    "💎 : "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
+    "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
+    "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
+    "💎💎💎💎 : "+str(info.get("diamonds_lvl4_count",0))+"\n"+ \
+    "💎💎💎💎💎 : "+str(info.get("diamonds_lvl5_count",0))+"\n"+ \
+    "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+"\n\n"
 
     if days>0:
-        body+=username + " Last "+str(days)+" Days Top "+str(number_top_users)+" User Engagement Score\n"
+        body+="🏆 "+username + "'s Top " +str(number_top_users)+ " Engaged Users (Last " +str(days)+ " Days) 🏆\n"
     else:
         body+=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Top "+str(number_top_users)+" User Engagement Score\n"
     i=1
