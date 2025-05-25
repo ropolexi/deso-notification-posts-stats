@@ -635,9 +635,7 @@ def button_click(user,post_hash,entry_number_of_posts,number_top_users,days,post
         while( calculation_thread and calculation_thread.is_alive()):
             print("Existing calculation is running. waiting...")
             time.sleep(1)  
-        entry_number_of_posts = int(entry_number_of_posts)  
-        number_top_users = int(number_top_users)
-        days=int(days)
+        
 
 
         if len(user)==0:
@@ -675,6 +673,13 @@ def notificationListener(posts_to_scan,top_user_limit,days):
     post_id_list=[]
     if result:=load_from_json("postIdList.json"):
         post_id_list=result["post_ids"]
+
+    posts_to_scan = int(posts_to_scan)  
+    top_user_limit = int(top_user_limit)
+    days=int(days)
+    print(f"posts_to_scan:{posts_to_scan}")
+    print(f"top_user_limit:{top_user_limit}")
+    print(f"days:{days}")
 
     while not app_close:
         try:
