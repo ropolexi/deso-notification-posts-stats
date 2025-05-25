@@ -738,24 +738,26 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                                     
                                     print(username)
                                     print(body)
-                                    days, top_users = extract_days_and_top_users(body)
-                                    print(f"Days: {days}, Top Users: {top_users}")
-                                    if days is None:
-                                        days=7
-                                    if top_users is None:
-                                        top_users = 10
-                                    if days>365:
-                                        days=365
-                                    if days<0:
-                                        days=0
+                                    days_body, top_user_limit_body = extract_days_and_top_users(body)
+                                    print(f"Days: {days_body}, Top Users: {top_user_limit_body}")
+                                    if days_body is None:
+                                        days_body=days
+                                    if top_user_limit_body is None:
+                                        top_user_limit_body = top_user_limit
 
-                                    if top_users>100:
-                                        top_users=100
-                                    if top_users<=0:
-                                        top_users=10
+                                    if days_body>365:
+                                        days_body=365
+                                    if days_body<0:
+                                        days_body=0
+
+                                    if top_user_limit_body>100:
+                                        top_user_limit_body=100
+
+                                    if top_user_limit_body<=0:
+                                        top_user_limit_body=top_user_limit
                                     print("After validating numbers")
-                                    print(f"Days: {days}, Top Users: {top_users}")
-                                    #button_click(username,"",posts_to_scan,top_users,days,postIdToPost=postId)
+                                    print(f"Days: {days_body}, Top Users: {top_user_limit_body}")
+                                    button_click(username,"",posts_to_scan,top_user_limit_body,days_body,postIdToPost=postId)
 
                                     break
                 if currentIndex<=lastIndex:
