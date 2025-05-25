@@ -6,6 +6,8 @@ import time
 from deso_sdk import DeSoDexClient
 from deso_sdk  import base58_check_encode
 import argparse
+from pprint import pprint
+import datetime
 blacklist = ["greenwork32","globalnetwork22"]  #bots accounts username list
 
 BASE_URL = "https://node.deso.org"
@@ -137,10 +139,11 @@ def get_single_post(post_hash_hex, reader_public_key=None, fetch_parents=False, 
     data = api_get("get-single-post", payload)
     return data["PostFound"] if "PostFound" in data else None
 
-def get_last_posts(public_key, num_to_fetch=1):
+def get_last_posts(public_key, num_to_fetch=1,LastPostHashHex=""):
     payload = {
         "PublicKeyBase58Check": public_key,
-        "NumToFetch": num_to_fetch
+        "NumToFetch": num_to_fetch,
+        "LastPostHashHex":LastPostHashHex
     }
     data = api_get("get-posts-for-public-key", payload)
     return data["Posts"] if "Posts" in data and data["Posts"] else None
@@ -488,21 +491,49 @@ def create_post(body,parent_post_hash_hex):
     except Exception as e:
         print(f"ERROR: Submit post call failed: {e}")
 
-def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top_users,postIdToPost):
+def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top_users,days,postIdToPost):
     global stop_flag
     post_scores = {} 
     post_comments_body={}
     username_publickey = {}
     user_public_key = user_pubkey
     single_post_hash_check=post_hash
-
+    last_posts=[]
     if len(single_post_hash_check)>0:
         last_posts=[{"PostHashHex":single_post_hash_check,"Body":"Single","PostExtraData":{}}]
     else:
-        last_posts = get_last_posts(user_public_key, NUM_POSTS_TO_FETCH)
+        last_post_id=""
+        if days>0:
+            if days>365:
+                days=365
+            NUM_POSTS_TO_FETCH=20
+            now = datetime.datetime.now(datetime.timezone.utc)
+            # Calculate the time 'days_ago' days ago as a datetime object.
+            past_datetime = now - datetime.timedelta(days=days)
+            # Convert the past datetime object to a Unix timestamp.
+            past_timestamp = time.mktime(past_datetime.timetuple())
+            too_old=False
+        while(not too_old):
+            last_posts_temp = get_last_posts(user_public_key, NUM_POSTS_TO_FETCH,last_post_id)
+            #pprint(last_posts_temp)
+            if days>0:
+                for post in last_posts_temp:#check timestamp
+                    if(post["TimestampNanos"]/1e9 >past_timestamp):
+                        print(post["TimestampNanos"])
+                        last_post_id = post['PostHashHex']
+                        last_posts.append(post)
+                    else:
+                        too_old=True
+                        break
+            else:
+                last_posts = last_posts_temp
+                break
+
+
     info={}
     info["post_index"]=0
     futures = []
+    #print(last_posts)
     if last_posts:
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -534,7 +565,10 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     sorted_data = sorted(combined_data.items(), key=lambda item: item[1]['total_score'], reverse=True)
     top_10 = sorted_data[:number_top_users]
     stop_flag = True
-    body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n"
+    if days>0:
+        body=username + " Last "+str(days)+" Days Information\n"
+    else:
+        body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n"
     body +="All Users: "+str(len(user_scores1))+"\n"+ \
     "Comments Count: "+str(info.get("comments_count",0))+"\n"+ \
     "💎 Count: "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
@@ -548,7 +582,10 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     "Reaction Count: "+str(info.get("reaction_count",0))+"\n"+ \
     "Polls Count: "+str(info.get("polls_count",0))+"\n\n"
 
-    body+=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Top "+str(number_top_users)+" User Engagement Score\n"
+    if days>0:
+        body+=username + " Last "+str(days)+" Days Top "+str(number_top_users)+" User Engagement Score\n"
+    else:
+        body+=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Top "+str(number_top_users)+" User Engagement Score\n"
     i=1
     for record in top_10:
         total_score = record[1]['total_score']
@@ -563,7 +600,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         i +=1
     
     print(body)
-    create_post(body,postIdToPost)
+    #create_post(body,postIdToPost)
 
 def save_to_json(data, filename):
   try:
@@ -591,7 +628,7 @@ def load_from_json(filename):
     print(f"Error loading from file: {e}")
     return None
 
-def button_click(user,post_hash,entry_number_of_posts,number_top_users,postIdToPost=""):
+def button_click(user,post_hash,entry_number_of_posts,number_top_users,days=0,postIdToPost=""):
     global calculation_thread,stop_flag
     try:
                 
@@ -623,13 +660,13 @@ def button_click(user,post_hash,entry_number_of_posts,number_top_users,postIdToP
             NUM_POSTS_TO_FETCH = entry_number_of_posts
 
         stop_flag = False  # Reset stop flag
-        calculation_thread = threading.Thread(target=calculate_stats, args=(user,user_pub_key, post_hash, NUM_POSTS_TO_FETCH,number_top_users,postIdToPost))
+        calculation_thread = threading.Thread(target=calculate_stats, args=(user,user_pub_key, post_hash, NUM_POSTS_TO_FETCH,number_top_users,days,postIdToPost))
         calculation_thread.start()
      
     except Exception as e:
         print(f"Error: {e}")  # Display error if something goes wrong
 
-def notificationListener(posts_to_scan,top_user_limit):
+def notificationListener(posts_to_scan,top_user_limit,days):
     profile=get_single_profile("",bot_public_key)
     post_id_list=[]
     if result:=load_from_json("postIdList.json"):
@@ -669,7 +706,7 @@ def notificationListener(posts_to_scan,top_user_limit):
                                     r=get_single_profile("",transactor)
                                     username= r["Profile"]["Username"]
                                     print(username)
-                                    button_click(username,"",posts_to_scan,top_user_limit,postIdToPost=postId)
+                                    button_click(username,"",posts_to_scan,top_user_limit,days,postIdToPost=postId)
 
                                     break
                 if currentIndex<=lastIndex:
@@ -686,8 +723,12 @@ def notificationListener(posts_to_scan,top_user_limit):
 
 parser = argparse.ArgumentParser(description="Performs deso posts calculation")
 parser.add_argument("-p", "--posts", default="20",help="Number of posts to check")
-parser.add_argument("-t", "--top", default="10",help="Top users limit")
+parser.add_argument("-d", "--days", default="0",help="past days")
+parser.add_argument("-t", "--top", default="10",help="Top users limit,max days:365")
+
 args = parser.parse_args()
-notificationListener(args.posts,args.top)
+#button_click("NimalYas","",5,10,7,postIdToPost="")
+notificationListener(args.posts,args.top,args.days)
+
     
 
