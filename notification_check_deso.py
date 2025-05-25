@@ -740,6 +740,10 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                                     print(body)
                                     days, top_users = extract_days_and_top_users(body)
                                     print(f"Days: {days}, Top Users: {top_users}")
+                                    if days is None:
+                                        days=7
+                                    if top_users is None:
+                                        top_users = 10
                                     if days>365:
                                         days=365
                                     if days<0:
@@ -749,7 +753,9 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                                         top_users=100
                                     if top_users<=0:
                                         top_users=10
-                                    button_click(username,"",posts_to_scan,top_users,days,postIdToPost=postId)
+                                    print("After validating numbers")
+                                    print(f"Days: {days}, Top Users: {top_users}")
+                                    #button_click(username,"",posts_to_scan,top_users,days,postIdToPost=postId)
 
                                     break
                 if currentIndex<=lastIndex:
@@ -774,4 +780,3 @@ args = parser.parse_args()
 notificationListener(args.posts,args.top,args.days)
 
     
-
