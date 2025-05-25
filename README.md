@@ -32,7 +32,11 @@ pip install -r requirements.txt
 
 
 # Run the app
-python notification_check_deso.py
+Last 20 posts
+python notification_check_deso.py -p 20 -t 10
+
+Last 7 days
+python notification_check_deso.py -d 7 -t 10
 
 ## How I measure post engagement
 ➕ Follow = 100pts
