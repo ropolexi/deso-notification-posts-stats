@@ -32,19 +32,21 @@ pip install -r requirements.txt
 
 
 # Run the app
-Last 20 posts
+Last 20 posts , top 10 users
 
 python notification_check_deso.py -p 20 -t 10
 
-Last 7 days
+Last 7 days , top 10 users
 
 python notification_check_deso.py -d 7 -t 10
 
+---
+
 Use the following format when writing the post.
 
-@mypostsinfo top 10 users over the last 100 days
+`@mypostsinfo top 10 users over the last 7 days`
 
-If the user does not provide days and top users limit it will use the values given when starting the app
+If the user does not provide days or top users limit, it will use the values given when starting the app
 
 # Help
 usage: notification_check_deso.py [-h] [-p POSTS] [-d DAYS] [-t TOP]
