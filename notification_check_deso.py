@@ -490,8 +490,10 @@ def create_post(body,parent_post_hash_hex):
         txn_hash = submitted_txn_response['TxnHashHex']
         client.wait_for_commitment_with_timeout(txn_hash, 30.0)
         print('SUCCESS!')
+        return 1
     except Exception as e:
         print(f"ERROR: Submit post call failed: {e}")
+        return 0
 
 def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top_users,days,postIdToPost):
     global stop_flag
@@ -571,19 +573,19 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         body=username + " Last "+str(days)+" Days Information\n"
     else:
         body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n"
-    body +="All Users: "+str(len(user_scores1))+"\n"+ \
-    "Posts Count: "+str(len(last_posts))+"\n"+ \
-    "Comments Count: "+str(info.get("comments_count",0))+"\n"+ \
+    body +="All Users Engaged on Your Posts: "+str(len(user_scores1))+"\n"+ \
+    "Your Posts Count: "+str(len(last_posts))+"\n"+ \
+    "Comments by Users: "+str(info.get("comments_count",0))+"\n"+ \
     "💎 Count: "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
     "💎💎 Count: "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
     "💎💎💎 Count: "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
     "💎💎💎💎 Count: "+str(info.get("diamonds_lvl4_count",0))+"\n"+ \
     "💎💎💎💎💎 Count: "+str(info.get("diamonds_lvl5_count",0))+"\n"+ \
     "💎💎💎💎💎💎 Count: "+str(info.get("diamonds_lvl6_count",0))+"\n"+ \
-    "Reposts Count: "+str(info.get("reposts_count",0))+"\n"+ \
-    "Quote Reposts Count: "+str(info.get("quote_reposts_count",0))+"\n"+ \
-    "Reaction Count: "+str(info.get("reaction_count",0))+"\n"+ \
-    "Polls Count: "+str(info.get("polls_count",0))+"\n\n"
+    "Reposts by Users: "+str(info.get("reposts_count",0))+"\n"+ \
+    "Quote Reposts by Users: "+str(info.get("quote_reposts_count",0))+"\n"+ \
+    "Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
+    "Polls by Users: "+str(info.get("polls_count",0))+"\n\n"
 
     if days>0:
         body+=username + " Last "+str(days)+" Days Top "+str(number_top_users)+" User Engagement Score\n"
