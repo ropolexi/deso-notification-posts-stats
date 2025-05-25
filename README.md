@@ -49,11 +49,11 @@ options:
 
   -h, --help            show this help message and exit
   
-  -p POSTS, --posts POSTS Number of posts to check
+  -p POSTS, --posts POSTS Number of posts to check default="20"
                         
-  -d DAYS, --days DAYS  past days
+  -d DAYS, --days DAYS  past days  default="0" max days:365
   
-  -t TOP, --top TOP     Top users limit,max days:365
+  -t TOP, --top TOP     Top users limit default="10"
   
   
 ## How I measure post engagement
