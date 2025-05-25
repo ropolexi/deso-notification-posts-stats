@@ -5,7 +5,7 @@ import concurrent.futures
 import time
 from deso_sdk import DeSoDexClient
 from deso_sdk  import base58_check_encode
-
+import argparse
 blacklist = ["greenwork32","globalnetwork22"]  #bots accounts username list
 
 BASE_URL = "https://node.deso.org"
@@ -629,7 +629,7 @@ def button_click(user,post_hash,entry_number_of_posts,number_top_users,postIdToP
     except Exception as e:
         print(f"Error: {e}")  # Display error if something goes wrong
 
-def notificationListener():
+def notificationListener(posts_to_scan,top_user_limit):
     profile=get_single_profile("",bot_public_key)
     post_id_list=[]
     if result:=load_from_json("postIdList.json"):
@@ -669,7 +669,7 @@ def notificationListener():
                                     r=get_single_profile("",transactor)
                                     username= r["Profile"]["Username"]
                                     print(username)
-                                    button_click(username,"",20,10,postIdToPost=postId)
+                                    button_click(username,"",posts_to_scan,top_user_limit,postIdToPost=postId)
 
                                     break
                 if currentIndex<=lastIndex:
@@ -684,6 +684,10 @@ def notificationListener():
             print(e)
             time.sleep(1)
 
-notificationListener()
+parser = argparse.ArgumentParser(description="Performs deso posts calculation")
+parser.add_argument("-p", "--posts", default="20",help="Number of posts to check")
+parser.add_argument("-t", "--top", default="10",help="Top users limit")
+args = parser.parse_args()
+notificationListener(args.posts,args.top)
     
 
