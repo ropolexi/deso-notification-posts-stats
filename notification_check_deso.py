@@ -600,7 +600,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         i +=1
     
     print(body)
-    #create_post(body,postIdToPost)
+    create_post(body,postIdToPost)
 
 def save_to_json(data, filename):
   try:
