@@ -37,13 +37,13 @@ stop_flag = True
 calculation_thread = None
 app_close=False
 
+
 client = DeSoDexClient(
     is_testnet=False,
     seed_phrase_or_hex=seed_phrase_or_hex,
     passphrase="",
     node_url=BASE_URL
 )
-bot_public_key = base58_check_encode(client.deso_keypair.public_key, False)
 
 def api_get(endpoint, payload=None):
     try:
@@ -62,6 +62,13 @@ def get_single_profile(Username,PublicKeyBase58Check=""):
     }
     data = api_get("get-single-profile", payload)
     return data
+
+
+bot_public_key = base58_check_encode(client.deso_keypair.public_key, False)
+bot_username = get_single_profile("",bot_public_key)["Profile"]["Username"]
+if bot_username is None:
+    print("Error,bot username can not get. exit")
+    exit()
 
 
 def post_associations_counts(post_hash,AssociationType,AssociationValues):
@@ -207,7 +214,7 @@ def combine_data(post_scores, username_follow,owner_username):
         filtered_data = {k: v for k, v in post_score_data.items() if k != 'comment_timestamp'}
         total_score = sum(filtered_data.values()) + follow_score_data
 
-        if username in blacklist or username==owner_username:
+        if username in blacklist or username==owner_username or username==bot_username:
             total_score = 0
             post_score_data=0
             follow_score_data=0
@@ -493,6 +500,29 @@ def create_post(body,parent_post_hash_hex):
         print(f"ERROR: Submit post call failed: {e}")
         return 0
 
+def get_most_and_least_engaged_posts(post_scores):
+    post_engagement = {}
+    for post_id, user_scores in post_scores.items():
+        total_engagement = 0
+        for user, scores in user_scores.items():
+            if isinstance(scores, dict):
+                # Iterate through possible engagement metrics
+                for metric in ["comment", "diamond", "repost","quote_repost", "LIKE", "LOVE", "DISLIKE", "SAD", "ASTONISHED", "ANGRY", "LAUGH", "POLL"]:
+                    if metric in scores:
+                        total_engagement += scores[metric]
+        post_engagement[post_id] = total_engagement
+
+    if not post_engagement:
+        return (None, None)
+
+    most_engaged_post = max(post_engagement, key=post_engagement.get)
+    most_engaged_score = post_engagement[most_engaged_post]
+    least_engaged_post = min(post_engagement, key=post_engagement.get)
+    least_engaged_score = post_engagement[least_engaged_post]
+
+    return (most_engaged_post, least_engaged_post,most_engaged_score,least_engaged_score)
+
+
 def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top_users,days,postIdToPost):
     global stop_flag
     post_scores = {} 
@@ -552,6 +582,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
 
     #print("post_scores")
     #print(post_scores)
+    most_engaged_post, least_engaged_post,most_engaged_score,least_engaged_score=get_most_and_least_engaged_posts(post_scores)
     user_scores1 = calculate_user_category_scores(post_scores)
     username_follow={}
     username_follow = update_following(user_scores1,username_publickey,user_public_key,username_follow)
@@ -580,6 +611,8 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     "📢 Quote Reposts by Users: "+str(info.get("quote_reposts_count",0))+"\n"+ \
     "❤️ Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
     "📊 Poll Participants: "+str(info.get("polls_count",0))+"\n\n"+ \
+    "🔥 Most Engaged Post (Score:"+str(most_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+most_engaged_post +"\n\n"+ \
+    "📉 Least Engaged Post (Score:"+str(least_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+least_engaged_post +"\n\n"+ \
     "💎 : "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
     "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
     "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
@@ -780,7 +813,7 @@ parser.add_argument("-d", "--days", default="0",help="past days")
 parser.add_argument("-t", "--top", default="10",help="Top users limit,max days:365")
 
 args = parser.parse_args()
-#button_click("NimalYas","",5,10,7,postIdToPost="")
+
 notificationListener(args.posts,args.top,args.days)
 
     
