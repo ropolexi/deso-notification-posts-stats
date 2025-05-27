@@ -535,6 +535,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         last_posts=[{"PostHashHex":single_post_hash_check,"Body":"Single","PostExtraData":{}}]
     else:
         last_post_id=""
+        too_old=False
         if days>0:
             if days>365:
                 days=365
@@ -544,7 +545,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
             past_datetime = now - datetime.timedelta(days=days)
             # Convert the past datetime object to a Unix timestamp.
             past_timestamp = time.mktime(past_datetime.timetuple())
-            too_old=False
+            
         while(not too_old):
             last_posts_temp = get_last_posts(user_public_key, NUM_POSTS_TO_FETCH,last_post_id)
             #pprint(last_posts_temp)
