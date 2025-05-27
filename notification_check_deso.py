@@ -794,12 +794,13 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                                     print("After validating numbers")
                                     print(f"Days: {days_body}, Top Users: {top_user_limit_body}")
                                     button_click(username,"",posts_to_scan,top_user_limit_body,days_body,postIdToPost=postId)
+                                    save_to_json({"post_ids":post_id_list},"postIdList.json")
 
                                     break
                 if currentIndex<=lastIndex:
                     break
 
-            save_to_json({"post_ids":post_id_list},"postIdList.json")
+            
             for _ in range(NOTIFICATION_UPDATE_INTERVEL):
                 time.sleep(1)
                 if app_close: 
