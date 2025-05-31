@@ -252,34 +252,34 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
             post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
             post_scores[post_hash_hex][username]["comment_timestamp"] = timestamp
             post_comments_body[post_hash_hex]["comments"][username] = body
-            if comment["CommentCount"]>0:
-                single_post_details_sub = get_single_post(comment["PostHashHex"], reader_public_key)
-                if single_post_details_sub and single_post_details_sub["Comments"]:
-                    print("==>Sub 1 comment")
-                    for comment in single_post_details_sub["Comments"]:
-                        username = comment["ProfileEntryResponse"]["Username"]
-                        public_key = comment["ProfileEntryResponse"][pkbc]
-                        username_publickey[username] = public_key
-                        print(f"    Comment by: {username}")
-                        body = comment["Body"]
-                        info["comments_count"] = info.get("comments_count",0) + 1
-                        #print(f"    Comment : {body}")
-                        post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
-                        post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
-                        if comment["CommentCount"]>0:
-                            single_post_details_sub2 = get_single_post(comment["PostHashHex"], reader_public_key)
-                            if single_post_details_sub2 and single_post_details_sub2["Comments"]:
-                                print("==>Sub 2 comment")
-                                for comment in single_post_details_sub2["Comments"]:
-                                    username = comment["ProfileEntryResponse"]["Username"]
-                                    public_key = comment["ProfileEntryResponse"][pkbc]
-                                    username_publickey[username] = public_key
-                                    print(f"        Comment by: {username}")
-                                    body = comment["Body"]
-                                    info["comments_count"] = info.get("comments_count",0) + 1
-                                    #print(f"        Comment : {body}")
-                                    post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
-                                    post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
+            
+            single_post_details_sub = get_single_post(comment["PostHashHex"], reader_public_key)
+            if single_post_details_sub and single_post_details_sub["Comments"]:
+                print("==>Sub 1 comment")
+                for comment in single_post_details_sub["Comments"]:
+                    username = comment["ProfileEntryResponse"]["Username"]
+                    public_key = comment["ProfileEntryResponse"][pkbc]
+                    username_publickey[username] = public_key
+                    print(f"    Comment by: {username}")
+                    body = comment["Body"]
+                    info["comments_count"] = info.get("comments_count",0) + 1
+                    #print(f"    Comment : {body}")
+                    post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
+                    post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
+
+                    single_post_details_sub2 = get_single_post(comment["PostHashHex"], reader_public_key)
+                    if single_post_details_sub2 and single_post_details_sub2["Comments"]:
+                        print("==>Sub 2 comment")
+                        for comment in single_post_details_sub2["Comments"]:
+                            username = comment["ProfileEntryResponse"]["Username"]
+                            public_key = comment["ProfileEntryResponse"][pkbc]
+                            username_publickey[username] = public_key
+                            print(f"        Comment by: {username}")
+                            body = comment["Body"]
+                            info["comments_count"] = info.get("comments_count",0) + 1
+                            #print(f"        Comment : {body}")
+                            post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
+                            post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
         get_first_commenter(post_scores,post_hash_hex)
         #print(info)
 def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores,info):
@@ -750,12 +750,11 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                 print(f"currentIndex:{currentIndex}")
                 result=get_notifications(profile["Profile"]["PublicKeyBase58Check"],FetchStartIndex=currentIndex,NumToFetch=20,FilteredOutNotificationCategories={"dao coin":True,"user association":True, "post association":True,"post":False,"dao":True,"nft":True,"follow":True,"like":True,"diamond":True,"transfer":True})
                 for notification in result["Notifications"]:
-                    
-                    if currentIndex!=notification["Index"]:
-                        currentIndex = notification["Index"]
-                        if first:
-                            first=False
-                            save_to_json({"index":notification["Index"]},"notificationLastIndex.json")
+                
+                    currentIndex = notification["Index"]
+                    if first:
+                        first=False
+                        save_to_json({"index":notification["Index"]},"notificationLastIndex.json")
                             
                     for affectedkeys in notification["Metadata"]["AffectedPublicKeys"]:
                         if affectedkeys["Metadata"]=="MentionedPublicKeyBase58Check":
