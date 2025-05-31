@@ -550,18 +550,19 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         while(not too_old):
             last_posts_temp = get_last_posts(user_public_key, NUM_POSTS_TO_FETCH,last_post_id)
             #pprint(last_posts_temp)
-            if days>0:
-                for post in last_posts_temp:#check timestamp
-                    if(post["TimestampNanos"]/1e9 >past_timestamp):
-                        print(post["TimestampNanos"])
-                        last_post_id = post['PostHashHex']
-                        last_posts.append(post)
-                    else:
-                        too_old=True
-                        break
-            else:
-                last_posts = last_posts_temp
-                break
+            if last_posts_temp is not None:
+                if days>0:
+                    for post in last_posts_temp:#check timestamp
+                        if(post["TimestampNanos"]/1e9 >past_timestamp):
+                            print(post["TimestampNanos"])
+                            last_post_id = post['PostHashHex']
+                            last_posts.append(post)
+                        else:
+                            too_old=True
+                            break
+                else:
+                    last_posts = last_posts_temp
+                    break
 
 
     info={}
@@ -569,7 +570,6 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     futures = []
     #print(last_posts)
     if last_posts:
-        
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for post in last_posts:
                 future = executor.submit(process_post, post,post_scores,post_comments_body,user_public_key,username_publickey,info,NUM_POSTS_TO_FETCH)
@@ -582,64 +582,64 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
             except Exception as e:
                 print(f"Error processing {username}: {e}")
 
-    #print("post_scores")
-    #print(post_scores)
-    most_engaged_post,most_engaged_score=get_most_and_least_engaged_posts(post_scores)
-    user_scores1 = calculate_user_category_scores(post_scores)
-    username_follow={}
-    username_follow = update_following(user_scores1,username_publickey,user_public_key,username_follow)
+        #print("post_scores")
+        #print(post_scores)
+        most_engaged_post,most_engaged_score=get_most_and_least_engaged_posts(post_scores)
+        user_scores1 = calculate_user_category_scores(post_scores)
+        username_follow={}
+        username_follow = update_following(user_scores1,username_publickey,user_public_key,username_follow)
 
-    print("\nUser Post data:") 
-    print(user_scores1)
+        print("\nUser Post data:") 
+        print(user_scores1)
 
-    print("\nusername_follow:")
-    print(username_follow)
-    total_users_followed=int(sum(username_follow.values())/FOLLOW_SCORE)
-    # Combine the data
-    combined_data = combine_data(user_scores1, username_follow,username)
+        print("\nusername_follow:")
+        print(username_follow)
+        total_users_followed=int(sum(username_follow.values())/FOLLOW_SCORE)
+        # Combine the data
+        combined_data = combine_data(user_scores1, username_follow,username)
 
-    sorted_data = sorted(combined_data.items(), key=lambda item: item[1]['total_score'], reverse=True)
-    top_10 = sorted_data[:number_top_users]
-    stop_flag = True
-    if days>0:
-        body="User Engagement Metrics for "+username + "'s Posts Over The Last "+str(days)+" Days\n\n"
-    else:
-        body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n\n"
-    body +="👤 All Users Engaged on Your Posts: "+str(len(user_scores1))+"\n"+ \
-    "➕ Followers Engaged on Your Posts: "+str(total_users_followed)+"\n"+ \
-    "📝 Your Posts Count: "+str(len(last_posts))+"\n"+ \
-    "💬 Comments by Users: "+str(info.get("comments_count",0))+"\n"+ \
-    "🔁 Reposts by Users: "+str(info.get("reposts_count",0))+"\n"+ \
-    "📢 Quote Reposts by Users: "+str(info.get("quote_reposts_count",0))+"\n"+ \
-    "❤️ Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
-    "📊 Poll Participants: "+str(info.get("polls_count",0))+"\n\n"+ \
-    "🔥 Most Engaged Post (Score:"+str(most_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+most_engaged_post +"\n\n"+ \
-    "💎 : "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
-    "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
-    "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
-    "💎💎💎💎 : "+str(info.get("diamonds_lvl4_count",0))+"\n"+ \
-    "💎💎💎💎💎 : "+str(info.get("diamonds_lvl5_count",0))+"\n"+ \
-    "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+"\n\n"
+        sorted_data = sorted(combined_data.items(), key=lambda item: item[1]['total_score'], reverse=True)
+        top_10 = sorted_data[:number_top_users]
+        stop_flag = True
+        if days>0:
+            body="User Engagement Metrics for "+username + "'s Posts Over The Last "+str(days)+" Days\n\n"
+        else:
+            body=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Information\n\n"
+        body +="👤 All Users Engaged on Your Posts: "+str(len(user_scores1))+"\n"+ \
+        "➕ Followers Engaged on Your Posts: "+str(total_users_followed)+"\n"+ \
+        "📝 Your Posts Count: "+str(len(last_posts))+"\n"+ \
+        "💬 Comments by Users: "+str(info.get("comments_count",0))+"\n"+ \
+        "🔁 Reposts by Users: "+str(info.get("reposts_count",0))+"\n"+ \
+        "📢 Quote Reposts by Users: "+str(info.get("quote_reposts_count",0))+"\n"+ \
+        "❤️ Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
+        "📊 Poll Participants: "+str(info.get("polls_count",0))+"\n\n"+ \
+        "🔥 Most Engaged Post (Score:"+str(most_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+most_engaged_post +"\n\n"+ \
+        "💎 : "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
+        "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
+        "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
+        "💎💎💎💎 : "+str(info.get("diamonds_lvl4_count",0))+"\n"+ \
+        "💎💎💎💎💎 : "+str(info.get("diamonds_lvl5_count",0))+"\n"+ \
+        "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+"\n\n"
 
-    if days>0:
-        body+="🏆 "+username + "'s Top " +str(number_top_users)+ " Engaged Users (Last " +str(days)+ " Days) 🏆\n"
-    else:
-        body+=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Top "+str(number_top_users)+" User Engagement Score\n"
-    i=1
-    for record in top_10:
-        total_score = record[1]['total_score']
-        badge = ""
-        if 300 <= total_score <= 500:
-            badge = " 🥉"
-        elif 501 <= total_score <= 1000:
-            badge = " 🥈"
-        elif total_score >= 1001:
-            badge = " 🥇"
-        body +="["+str(i)+"] "+record[0]+" :"+str(total_score)+badge+"\n"
-        i +=1
-    
-    print(body)
-    #create_post(body,postIdToPost)
+        if days>0:
+            body+="🏆 "+username + "'s Top " +str(number_top_users)+ " Engaged Users (Last " +str(days)+ " Days) 🏆\n"
+        else:
+            body+=username + " Last "+str(NUM_POSTS_TO_FETCH)+" Posts Top "+str(number_top_users)+" User Engagement Score\n"
+        i=1
+        for record in top_10:
+            total_score = record[1]['total_score']
+            badge = ""
+            if 300 <= total_score <= 500:
+                badge = " 🥉"
+            elif 501 <= total_score <= 1000:
+                badge = " 🥈"
+            elif total_score >= 1001:
+                badge = " 🥇"
+            body +="["+str(i)+"] "+record[0]+" :"+str(total_score)+badge+"\n"
+            i +=1
+        
+        print(body)
+        create_post(body,postIdToPost)
 
 def save_to_json(data, filename):
   try:
