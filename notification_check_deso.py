@@ -14,6 +14,7 @@ blacklist = ["greenwork32","globalnetwork22"]  #bots accounts username list
 
 BASE_URL = "https://node.deso.org"
 
+
 seed_phrase_or_hex="" #dont share this
 
 COMMENT_SCORE = 15
@@ -252,34 +253,35 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
             post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
             post_scores[post_hash_hex][username]["comment_timestamp"] = timestamp
             post_comments_body[post_hash_hex]["comments"][username] = body
-            
-            single_post_details_sub = get_single_post(comment["PostHashHex"], reader_public_key)
-            if single_post_details_sub and single_post_details_sub["Comments"]:
-                print("==>Sub 1 comment")
-                for comment in single_post_details_sub["Comments"]:
-                    username = comment["ProfileEntryResponse"]["Username"]
-                    public_key = comment["ProfileEntryResponse"][pkbc]
-                    username_publickey[username] = public_key
-                    print(f"    Comment by: {username}")
-                    body = comment["Body"]
-                    info["comments_count"] = info.get("comments_count",0) + 1
-                    #print(f"    Comment : {body}")
-                    post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
-                    post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
+            if comment["CommentCount"]>0:
+                single_post_details_sub = get_single_post(comment["PostHashHex"], reader_public_key)
+                if single_post_details_sub and single_post_details_sub["Comments"]:
+                    print("==>Sub 1 comment")
+                    for comment in single_post_details_sub["Comments"]:
+                        username = comment["ProfileEntryResponse"]["Username"]
+                        public_key = comment["ProfileEntryResponse"][pkbc]
+                        username_publickey[username] = public_key
+                        print(f"    Comment by: {username}")
+                        body = comment["Body"]
+                        info["comments_count"] = info.get("comments_count",0) + 1
+                        #print(f"    Comment : {body}")
+                        post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
+                        post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
+                        if comment["CommentCount"]>0:
+                            single_post_details_sub2 = get_single_post(comment["PostHashHex"], reader_public_key)
+                            if single_post_details_sub2 and single_post_details_sub2["Comments"]:
+                                print("==>Sub 2 comment")
+                                for comment in single_post_details_sub2["Comments"]:
+                                    username = comment["ProfileEntryResponse"]["Username"]
+                                    public_key = comment["ProfileEntryResponse"][pkbc]
+                                    username_publickey[username] = public_key
+                                    print(f"        Comment by: {username}")
+                                    body = comment["Body"]
+                                    info["comments_count"] = info.get("comments_count",0) + 1
+                                    #print(f"        Comment : {body}")
+                                    post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
+                                    post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
 
-                    single_post_details_sub2 = get_single_post(comment["PostHashHex"], reader_public_key)
-                    if single_post_details_sub2 and single_post_details_sub2["Comments"]:
-                        print("==>Sub 2 comment")
-                        for comment in single_post_details_sub2["Comments"]:
-                            username = comment["ProfileEntryResponse"]["Username"]
-                            public_key = comment["ProfileEntryResponse"][pkbc]
-                            username_publickey[username] = public_key
-                            print(f"        Comment by: {username}")
-                            body = comment["Body"]
-                            info["comments_count"] = info.get("comments_count",0) + 1
-                            #print(f"        Comment : {body}")
-                            post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
-                            post_scores[post_hash_hex][username]["comment"] = post_scores[post_hash_hex][username].get("comment", 0) + COMMENT_SCORE
         get_first_commenter(post_scores,post_hash_hex)
         #print(info)
 def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores,info):
@@ -517,10 +519,9 @@ def get_most_and_least_engaged_posts(post_scores):
 
     most_engaged_post = max(post_engagement, key=post_engagement.get)
     most_engaged_score = post_engagement[most_engaged_post]
-    least_engaged_post = min(post_engagement, key=post_engagement.get)
-    least_engaged_score = post_engagement[least_engaged_post]
+   
 
-    return (most_engaged_post, least_engaged_post,most_engaged_score,least_engaged_score)
+    return (most_engaged_post,most_engaged_score)
 
 
 def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top_users,days,postIdToPost):
@@ -583,7 +584,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
 
     #print("post_scores")
     #print(post_scores)
-    most_engaged_post, least_engaged_post,most_engaged_score,least_engaged_score=get_most_and_least_engaged_posts(post_scores)
+    most_engaged_post,most_engaged_score=get_most_and_least_engaged_posts(post_scores)
     user_scores1 = calculate_user_category_scores(post_scores)
     username_follow={}
     username_follow = update_following(user_scores1,username_publickey,user_public_key,username_follow)
@@ -613,7 +614,6 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     "❤️ Reactions by Users: "+str(info.get("reaction_count",0))+"\n"+ \
     "📊 Poll Participants: "+str(info.get("polls_count",0))+"\n\n"+ \
     "🔥 Most Engaged Post (Score:"+str(most_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+most_engaged_post +"\n\n"+ \
-    "📉 Least Engaged Post (Score:"+str(least_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+least_engaged_post +"\n\n"+ \
     "💎 : "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
     "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
     "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
@@ -639,7 +639,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         i +=1
     
     print(body)
-    create_post(body,postIdToPost)
+    #create_post(body,postIdToPost)
 
 def save_to_json(data, filename):
   try:
