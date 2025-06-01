@@ -754,6 +754,9 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                 i +=1 
                 result=get_notifications(profile["Profile"]["PublicKeyBase58Check"],FetchStartIndex=currentIndex,NumToFetch=20,FilteredOutNotificationCategories={"dao coin":True,"user association":True, "post association":True,"post":False,"dao":True,"nft":True,"follow":True,"like":True,"diamond":True,"transfer":True})
                 for notification in result["Notifications"]:
+                    currentIndex = notification["Index"]
+                    print(f"currentIndex:{currentIndex}")
+                    
                     if notification["Index"]>maxIndex: #new mentions
                         print("New mentions")
                         maxIndex = notification["Index"]
@@ -762,8 +765,7 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                         break
                     
 
-                    currentIndex = notification["Index"]
-                    print(f"currentIndex:{currentIndex}")
+                    
                             
                     for affectedkeys in notification["Metadata"]["AffectedPublicKeys"]:
                         if affectedkeys["Metadata"]=="MentionedPublicKeyBase58Check":
