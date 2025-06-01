@@ -570,6 +570,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     futures = []
     #print(last_posts)
     if last_posts:
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for post in last_posts:
                 future = executor.submit(process_post, post,post_scores,post_comments_body,user_public_key,username_publickey,info,NUM_POSTS_TO_FETCH)
@@ -734,33 +735,42 @@ def notificationListener(posts_to_scan,top_user_limit,days):
     print(f"posts_to_scan:{posts_to_scan}")
     print(f"top_user_limit:{top_user_limit}")
     print(f"days:{days}")
+    lastIndex=-1
+    
+    if result:=load_from_json("notificationLastIndex.json"):
+        lastIndex=result["index"]
 
+    maxIndex=lastIndex
     while not app_close:
         try:
-            lastIndex=-1
+            
             currentIndex=-1
-            if result:=load_from_json("notificationLastIndex.json"):
-                lastIndex=result["index"]
+            
             print(f"lastIndex:{lastIndex}")
-            first=True
+            
             i=0
 
-            while i<10:#max 10 iteration, total 200 notifications check untill last check index
+            while i<20:#max 20 iteration, total 400 notifications check untill last check index
                 i +=1 
-                print(f"currentIndex:{currentIndex}")
                 result=get_notifications(profile["Profile"]["PublicKeyBase58Check"],FetchStartIndex=currentIndex,NumToFetch=20,FilteredOutNotificationCategories={"dao coin":True,"user association":True, "post association":True,"post":False,"dao":True,"nft":True,"follow":True,"like":True,"diamond":True,"transfer":True})
                 for notification in result["Notifications"]:
-                
+                    if notification["Index"]>maxIndex: #new mentions
+                        print("New mentions")
+                        maxIndex = notification["Index"]
+                    if currentIndex<lastIndex:
+                        print("Exiting notification loop, currentIndex<lastIndex")
+                        break
+                    
+
                     currentIndex = notification["Index"]
-                    if first:
-                        first=False
-                        save_to_json({"index":notification["Index"]},"notificationLastIndex.json")
+                    print(f"currentIndex:{currentIndex}")
                             
                     for affectedkeys in notification["Metadata"]["AffectedPublicKeys"]:
                         if affectedkeys["Metadata"]=="MentionedPublicKeyBase58Check":
                             if affectedkeys["PublicKeyBase58Check"]==profile["Profile"]["PublicKeyBase58Check"]:
                                 postId=notification["Metadata"]["SubmitPostTxindexMetadata"]["PostHashBeingModifiedHex"]
                                 if postId in post_id_list:
+                                    print("Already processed")
                                     break
                                 else:
                                     post_id_list.append(postId)
@@ -797,9 +807,16 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                                     save_to_json({"post_ids":post_id_list},"postIdList.json")
 
                                     break
+                if notification["Index"]<20: #end of mentions
+                    print("End of mentions")
+                    break 
                 if currentIndex<=lastIndex:
+                    print("Exiting while loop, currentIndex<=lastIndex")
                     break
-
+            if maxIndex > lastIndex:
+                print("maxIndex > lastIndex")
+                lastIndex = maxIndex
+                save_to_json({"index":lastIndex},"notificationLastIndex.json")
             
             for _ in range(NOTIFICATION_UPDATE_INTERVEL):
                 time.sleep(1)
