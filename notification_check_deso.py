@@ -14,6 +14,9 @@ blacklist = ["greenwork32","globalnetwork22"]  #bots accounts username list
 
 BASE_URL = "https://node.deso.org"
 
+REMOTE_API = False
+HAS_LOCAL_NODE_WITH_INDEXING = False
+HAS_LOCAL_NODE_WITHOUT_INDEXING = True
 
 seed_phrase_or_hex="" #dont share this
 
@@ -29,6 +32,7 @@ NOTIFICATION_UPDATE_INTERVEL = 30 #in seconds
 
 like_types = ["LIKE", "LOVE", "DISLIKE", "SAD", "ASTONISHED", "ANGRY", "LAUGH"]
 api_url = BASE_URL+"/api/v0/"
+local_url= "http://localhost"+"/api/v0/"
 prof_resp="PublicKeyToProfileEntryResponse"
 tpkbc ="TransactorPublicKeyBase58Check"
 pkbc="PublicKeyBase58Check"
@@ -37,6 +41,19 @@ pkbc="PublicKeyBase58Check"
 stop_flag = True
 calculation_thread = None
 app_close=False
+
+if REMOTE_API:
+    HAS_LOCAL_NODE_WITHOUT_INDEXING= False
+    HAS_LOCAL_NODE_WITH_INDEXING = False
+else:
+    if HAS_LOCAL_NODE_WITHOUT_INDEXING:
+        HAS_LOCAL_NODE_WITH_INDEXING = False
+
+    if HAS_LOCAL_NODE_WITH_INDEXING:
+        HAS_LOCAL_NODE_WITHOUT_INDEXING = False
+
+print(f"HAS_LOCAL_NODE_WITHOUT_INDEXING:{HAS_LOCAL_NODE_WITHOUT_INDEXING}")
+print(f"HAS_LOCAL_NODE_WITH_INDEXING:{HAS_LOCAL_NODE_WITH_INDEXING}")
 
 
 client = DeSoDexClient(
@@ -48,7 +65,19 @@ client = DeSoDexClient(
 
 def api_get(endpoint, payload=None):
     try:
-        response = requests.post(api_url + endpoint, json=payload)
+        if REMOTE_API:
+            response = requests.post(api_url + endpoint, json=payload)
+        else:
+            if HAS_LOCAL_NODE_WITHOUT_INDEXING:
+                if endpoint=="get-notifications":
+                    print("---Using remote node---")
+                    response = requests.post(api_url + endpoint, json=payload)
+                    print("--------End------------")
+                else:
+                    response = requests.post(local_url + endpoint, json=payload)
+            if HAS_LOCAL_NODE_WITH_INDEXING:
+                response = requests.post(local_url + endpoint, json=payload)
+            
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -495,7 +524,7 @@ def create_post(body,parent_post_hash_hex):
         print('Signing and submitting txn...')
         submitted_txn_response = client.sign_and_submit_txn(post_response)
         txn_hash = submitted_txn_response['TxnHashHex']
-        client.wait_for_commitment_with_timeout(txn_hash, 30.0)
+        #client.wait_for_commitment_with_timeout(txn_hash, 30.0)
         print('SUCCESS!')
         return 1
     except Exception as e:
