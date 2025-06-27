@@ -30,7 +30,7 @@ FOLLOW_SCORE = 100
 LIKE_SCORE = 1
 POLL_SCORE = 10
 
-NOTIFICATION_UPDATE_INTERVEL = 30 #in seconds
+NOTIFICATION_UPDATE_INTERVEL = 60 #in seconds
 
 like_types = ["LIKE", "LOVE", "DISLIKE", "SAD", "ASTONISHED", "ANGRY", "LAUGH"]
 api_url = BASE_URL+"/api/v0/"
@@ -62,7 +62,7 @@ client = DeSoDexClient(
     is_testnet=False,
     seed_phrase_or_hex=seed_phrase_or_hex,
     passphrase="",
-    node_url=BASE_URL
+    node_url=BASE_URL if REMOTE_API else "http://localhost:17001"
 )
 
 def api_get(endpoint, payload=None):
@@ -102,6 +102,12 @@ if bot_username is None:
     print("Error,bot username can not get. exit")
     exit()
 
+def get_app_state():
+    payload = {
+    }
+    data = api_get("get-app-state", payload)
+
+    return data
 
 def post_associations_counts(post_hash,AssociationType,AssociationValues):
     payload = {
@@ -315,7 +321,7 @@ def update_comments(post_comments_body,post_hash_hex,reader_public_key,username_
 
         get_first_commenter(post_scores,post_hash_hex)
         #print(info)
-def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores,info):
+def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores,info,USDCentsPerDeSoExchangeRate):
     if diamond_sender_details := get_diamonds(post_hash_hex, user_public_key):
         diamond_index=1
         for sender in diamond_sender_details:
@@ -327,16 +333,22 @@ def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores
             print("  Lvl " + str(sender["DiamondLevel"])+ f" Diamond  sent by: {username}")
             if sender["DiamondLevel"]==1:
                 info["diamonds_lvl1_count"] = info.get("diamonds_lvl1_count",0) + 1
+                info["diamonds_lvl1_value"] = info.get("diamonds_lvl1_value",0) + (USDCentsPerDeSoExchangeRate*50000/1e11)
             if sender["DiamondLevel"]==2:
                 info["diamonds_lvl2_count"] = info.get("diamonds_lvl2_count",0) + 1
+                info["diamonds_lvl2_value"] = info.get("diamonds_lvl2_value",0) + (USDCentsPerDeSoExchangeRate*500000/1e11)
             if sender["DiamondLevel"]==3:
                 info["diamonds_lvl3_count"] = info.get("diamonds_lvl3_count",0) + 1
+                info["diamonds_lvl3_value"] = info.get("diamonds_lvl3_value",0) + (USDCentsPerDeSoExchangeRate*5000000/1e11)
             if sender["DiamondLevel"]==4:
                 info["diamonds_lvl4_count"] = info.get("diamonds_lvl4_count",0) + 1
+                info["diamonds_lvl4_value"] = info.get("diamonds_lvl4_value",0) + (USDCentsPerDeSoExchangeRate*50000000/1e11)
             if sender["DiamondLevel"]==5:
                 info["diamonds_lvl5_count"] = info.get("diamonds_lvl5_count",0) + 1
+                info["diamonds_lvl5_value"] = info.get("diamonds_lvl5_value",0) + (USDCentsPerDeSoExchangeRate*500000000/1e11)
             if sender["DiamondLevel"]==6:
                 info["diamonds_lvl6_count"] = info.get("diamonds_lvl6_count",0) + 1
+                info["diamonds_lvl6_value"] = info.get("diamonds_lvl6_value",0) + (USDCentsPerDeSoExchangeRate*5000000000/1e11)
             post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
             post_scores[post_hash_hex][username]["diamond"] = post_scores[post_hash_hex][username].get("diamond", 0) + diamond_level_score     
     
@@ -356,16 +368,22 @@ def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores
                             print(f"  *FocusApp* Lvl {str(focus_level)} Diamond  sent by: {username}")
                             if level==1:
                                 info["diamonds_lvl1_count"] = info.get("diamonds_lvl1_count",0) + 1
+                               
                             if level==2:
                                 info["diamonds_lvl2_count"] = info.get("diamonds_lvl2_count",0) + 1
+                                info["diamonds_lvl2_value"] = info.get("diamonds_lvl2_value",0) + 0.01
                             if level==3:
                                 info["diamonds_lvl3_count"] = info.get("diamonds_lvl3_count",0) + 1
+                                info["diamonds_lvl3_value"] = info.get("diamonds_lvl3_value",0) + 0.25
                             if level==4:
                                 info["diamonds_lvl4_count"] = info.get("diamonds_lvl4_count",0) + 1
+                                info["diamonds_lvl4_value"] = info.get("diamonds_lvl4_value",0) + 1
                             if level==5:
                                 info["diamonds_lvl5_count"] = info.get("diamonds_lvl5_count",0) + 1
+                                info["diamonds_lvl5_value"] = info.get("diamonds_lvl5_value",0) + 5
                             if level==6:
                                 info["diamonds_lvl6_count"] = info.get("diamonds_lvl6_count",0) + 1
+                                info["diamonds_lvl6_value"] = info.get("diamonds_lvl6_value",0) + 10
                             post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
                             post_scores[post_hash_hex][username]["diamond"] = post_scores[post_hash_hex][username].get("diamond", 0) + diamond_level_score
          
@@ -465,7 +483,7 @@ def update_following(user_scores1,username_publickey,user_public_key,username_fo
 
 
 
-def process_post(post,post_scores,post_comments_body,user_public_key,username_publickey,info,NUM_POSTS_TO_FETCH):
+def process_post(post,post_scores,post_comments_body,user_public_key,username_publickey,info,NUM_POSTS_TO_FETCH,USDCentsPerDeSoExchangeRate):
 
     if stop_flag:
         return
@@ -485,7 +503,7 @@ def process_post(post,post_scores,post_comments_body,user_public_key,username_pu
         print("["+str(info["post_index"])+"]"+post_hash_hex)
     
     thread1 = threading.Thread(target=update_comments, args=(post_comments_body,post_hash_hex,reader_public_key,username_publickey,post_scores,info))
-    thread2 = threading.Thread(target=update_diamonds, args=(post_hash_hex,user_public_key,username_publickey,post_scores,info))
+    thread2 = threading.Thread(target=update_diamonds, args=(post_hash_hex,user_public_key,username_publickey,post_scores,info,USDCentsPerDeSoExchangeRate))
     thread3 = threading.Thread(target=update_reposts, args=(post_hash_hex,user_public_key,post_scores,info))
     thread4 = threading.Thread(target=update_quote_reposts, args=(post_hash_hex,user_public_key,post_scores,info))
     thread5 = threading.Thread(target=update_reactions, args=(post_hash_hex,username_publickey,post_scores,info))
@@ -563,6 +581,13 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
     user_public_key = user_pubkey
     single_post_hash_check=post_hash
     last_posts=[]
+
+    if info:=get_app_state():
+        nodes=info["Nodes"]
+        height=info["BlockHeight"]
+        USDCentsPerDeSoExchangeRate = info["USDCentsPerDeSoExchangeRate"]
+        print(f"USDCentsPerDeSoExchangeRate:{USDCentsPerDeSoExchangeRate}")
+
     if len(single_post_hash_check)>0:
         last_posts=[{"PostHashHex":single_post_hash_check,"Body":"Single","PostExtraData":{}}]
     else:
@@ -604,7 +629,7 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for post in last_posts:
-                future = executor.submit(process_post, post,post_scores,post_comments_body,user_public_key,username_publickey,info,NUM_POSTS_TO_FETCH)
+                future = executor.submit(process_post, post,post_scores,post_comments_body,user_public_key,username_publickey,info,NUM_POSTS_TO_FETCH,USDCentsPerDeSoExchangeRate)
                 futures.append(future)
 
         for future in futures:
@@ -650,13 +675,13 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         "📊 Poll Participants: "+str(info.get("polls_count",0))+"\n\n"+ \
         "🔥 Most Engaged Post (Score:"+str(most_engaged_score)+"):\n"+"https://diamondapp.com/posts/"+most_engaged_post +"\n\n"+ \
         "😎 Users Total Engagement Score: "+str(total_engagement_score)+"\n\n"+ \
-        "💎 : "+str(info.get("diamonds_lvl1_count",0))+"\n"+ \
-        "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+"\n"+ \
-        "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+"\n"+ \
-        "💎💎💎💎 : "+str(info.get("diamonds_lvl4_count",0))+"\n"+ \
-        "💎💎💎💎💎 : "+str(info.get("diamonds_lvl5_count",0))+"\n"+ \
-        "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+"\n\n"
-        
+        "💎 : "+str(info.get("diamonds_lvl1_count",0))+" ($"+str(round(info.get("diamonds_lvl1_value",0),3))+")\n"+ \
+        "💎💎 : "+str(info.get("diamonds_lvl2_count",0))+" ($"+str(round(info.get("diamonds_lvl2_value",0),3))+")\n"+ \
+        "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+" ($"+str(round(info.get("diamonds_lvl3_value",0),3))+")\n"+ \
+        "💎💎💎💎 : "+str(info.get("diamonds_lvl4_count",0))+" ($"+str(round(info.get("diamonds_lvl4_value",0),3))+")\n"+ \
+        "💎💎💎💎💎 : "+str(info.get("diamonds_lvl5_count",0))+" ($"+str(round(info.get("diamonds_lvl5_value",0),3))+")\n"+ \
+        "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+" ($"+str(round(info.get("diamonds_lvl6_value",0),3))+")\n\n"\
+        "Total : $"+str(round(info.get("diamonds_lvl1_value",0)+info.get("diamonds_lvl2_value",0)+info.get("diamonds_lvl3_value",0)+info.get("diamonds_lvl4_value",0)+info.get("diamonds_lvl5_value",0)+info.get("diamonds_lvl6_value",0),3))+"\n\n"
         if days>0:
             body+="🏆 "+username + "'s Top " +str(number_top_users)+ " Engaged Users (Last " +str(days)+ " Days) 🏆\n"
         else:
@@ -676,7 +701,9 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         
         print(body)
         with lock:
+
             create_post(body,postIdToPost)
+            pass
 
 def save_to_json(data, filename):
   try:
@@ -863,7 +890,7 @@ def notificationListener(posts_to_scan,top_user_limit,days):
                     return
         except Exception as e:
             print(e)
-            time.sleep(1)
+            time.sleep(60)
 
 parser = argparse.ArgumentParser(description="Performs deso posts calculation")
 parser.add_argument("-p", "--posts", default="20",help="Number of posts to check")
@@ -936,75 +963,81 @@ def give_diamonds():
     nano_ts=0
     post_id_list=[]
 
-    if result:=load_from_json("postIdList_LIKE.json"):
-        post_id_list=result
+    try:
 
-    while(True):
-        logging.debug("Checking feed")
-        if results:=get_posts_stateless(bot_public_key,NumToFetch=10):
-            for post in results["PostsFound"]:
-                logging.debug(post["TimestampNanos"])
-                nano_ts=post["TimestampNanos"]
-                if nano_ts > max_nano_ts:
-                    max_nano_ts = nano_ts
-                if nano_ts<=last_nano_tx:
-                    logging.debug("Old feed")
-                    break
-                if post["PostHashHex"] not in post_id_list:
-                    ts=nano_ts/1e9
-                    dt=datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
-                    logging.info(f"UTC Time:{dt}")
-                    logging.info(post["Body"])
-                    if post["Body"]!="":
-                        if amount:=get_balance(post['ProfileEntryResponse']['PublicKeyBase58Check']):
+        if result:=load_from_json("postIdList_LIKE.json"):
+            post_id_list=result
 
-                            if amount>1:
-                                try:
-                                    res=create_post_associations(post["PostHashHex"],"REACTION","LIKE",bot_public_key)
-                                    with lock:
-                                        signed_response = client.sign_and_submit_txn(res)
-                                    #pprint(signed_response)
-                        
-                                    res=send_diamonds(1,post["PostHashHex"],post['ProfileEntryResponse']['PublicKeyBase58Check'],bot_public_key)
-                                    with lock:
-                                        signed_response = client.sign_and_submit_txn(res)
-                                    #pprint(signed_response)
+        while(True):
+            logging.debug("Checking feed")
+            if results:=get_posts_stateless(bot_public_key,NumToFetch=10):
+                for post in results["PostsFound"]:
+                    logging.debug(post["TimestampNanos"])
+                    nano_ts=post["TimestampNanos"]
+                    if nano_ts > max_nano_ts:
+                        max_nano_ts = nano_ts
+                    if nano_ts<=last_nano_tx:
+                        logging.debug("Old feed")
+                        break
+                    if post["PostHashHex"] not in post_id_list:
+                        ts=nano_ts/1e9
+                        dt=datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc)
+                        logging.info(f"UTC Time:{dt}")
+                        logging.info(post["Body"])
+                        if post["Body"]!="":
+                            if amount:=get_balance(post['ProfileEntryResponse']['PublicKeyBase58Check']):
+
+                                if amount>1:
+                                    try:
+                                        res=create_post_associations(post["PostHashHex"],"REACTION","LIKE",bot_public_key)
+                                        with lock:
+                                            signed_response = client.sign_and_submit_txn(res)
+                                        #pprint(signed_response)
                             
-                                    print('SUCCESS!')
-
+                                        res=send_diamonds(1,post["PostHashHex"],post['ProfileEntryResponse']['PublicKeyBase58Check'],bot_public_key)
+                                        with lock:
+                                            signed_response = client.sign_and_submit_txn(res)
+                                        #pprint(signed_response)
                                 
-                                
-                                    balances = client.get_token_balances(
-                                        user_public_key=bot_public_key,
-                                        creator_public_keys=["DESO", bot_public_key],
-                                    )
+                                        print('SUCCESS!')
 
-                                    deso_balance_nanos = int(balances['Balances']['DESO']['BalanceBaseUnits'])
-                                    if deso_balance_nanos == 0:
-                                        print("error_msg_SET_SEED")
-                                        exit(1)
+                                    
+                                    
+                                        balances = client.get_token_balances(
+                                            user_public_key=bot_public_key,
+                                            creator_public_keys=["DESO", bot_public_key],
+                                        )
 
-                                
-                                    print(f'My DESO balance: {client.base_units_to_coins(deso_balance_nanos, is_deso=True)} coins')
-                                
-                                    #print('SUCCESS!')       
-                                except Exception as e:
-                                    logging.error(e)
-                            else:
-                                logging.info("Balance too low: Possibly BOT account")
-                    
-                    post_id_list.append(post["PostHashHex"])
-                    save_to_json(post_id_list,"postIdList_LIKE.json")
+                                        deso_balance_nanos = int(balances['Balances']['DESO']['BalanceBaseUnits'])
+                                        if deso_balance_nanos == 0:
+                                            print("error_msg_SET_SEED")
+                                            exit(1)
+
+                                    
+                                        print(f'My DESO balance: {client.base_units_to_coins(deso_balance_nanos, is_deso=True)} coins')
+                                    
+                                        #print('SUCCESS!')       
+                                    except Exception as e:
+                                        logging.error(e)
+                                else:
+                                    logging.info("Balance too low: Possibly BOT account")
+                        
+                        post_id_list.append(post["PostHashHex"])
+                        save_to_json(post_id_list,"postIdList_LIKE.json")
 
 
-                    logging.info("==============================")
-            if max_nano_ts>last_nano_tx:
-                last_nano_tx=max_nano_ts
-        time.sleep(5)
+                        logging.info("==============================")
+                if max_nano_ts>last_nano_tx:
+                    last_nano_tx=max_nano_ts
+            time.sleep(5)
+    except Exception as e:
+        logging.error(e)
+        time.sleep(60)
 
 if LIKE_DIAMOND_DISTRIBUTE:
     thread1 = threading.Thread(target=give_diamonds)
     thread1.start()
+
 
 notificationListener(args.posts,args.top,args.days)
 
