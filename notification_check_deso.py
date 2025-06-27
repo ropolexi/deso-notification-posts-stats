@@ -363,27 +363,27 @@ def update_diamonds(post_hash_hex,user_public_key,username_publickey,post_scores
                             user_data = get_single_profile("",record["ExtraData"]["SenderPublicKey"])
                             username = user_data["Profile"]["Username"]
                             focus_level = int(record["ExtraData"]["Level"])
-                            level=int(record["ExtraData"]["Level"])+1
-                            diamond_level_score = pow(10, level - 1)
+                            level=int(record["ExtraData"]["Level"])
+                            diamond_level_score = pow(10, level)
                             print(f"  *FocusApp* Lvl {str(focus_level)} Diamond  sent by: {username}")
                             if level==1:
-                                info["diamonds_lvl1_count"] = info.get("diamonds_lvl1_count",0) + 1
-                               
+                                info["f_diamonds_lvl1_count"] = info.get("f_diamonds_lvl1_count",0) + 1
+                                info["f_diamonds_lvl1_value"] = info.get("f_diamonds_lvl1_value",0) + 0.01
                             if level==2:
-                                info["diamonds_lvl2_count"] = info.get("diamonds_lvl2_count",0) + 1
-                                info["diamonds_lvl2_value"] = info.get("diamonds_lvl2_value",0) + 0.01
+                                info["f_diamonds_lvl2_count"] = info.get("f_diamonds_lvl2_count",0) + 1
+                                info["f_diamonds_lvl2_value"] = info.get("f_diamonds_lvl2_value",0) + 0.25
                             if level==3:
-                                info["diamonds_lvl3_count"] = info.get("diamonds_lvl3_count",0) + 1
-                                info["diamonds_lvl3_value"] = info.get("diamonds_lvl3_value",0) + 0.25
+                                info["f_diamonds_lvl3_count"] = info.get("f_diamonds_lvl3_count",0) + 1
+                                info["f_diamonds_lvl3_value"] = info.get("f_diamonds_lvl3_value",0) + 1
                             if level==4:
-                                info["diamonds_lvl4_count"] = info.get("diamonds_lvl4_count",0) + 1
-                                info["diamonds_lvl4_value"] = info.get("diamonds_lvl4_value",0) + 1
+                                info["f_diamonds_lvl4_count"] = info.get("f_diamonds_lvl4_count",0) + 1
+                                info["f_diamonds_lvl4_value"] = info.get("f_diamonds_lvl4_value",0) + 5
                             if level==5:
-                                info["diamonds_lvl5_count"] = info.get("diamonds_lvl5_count",0) + 1
-                                info["diamonds_lvl5_value"] = info.get("diamonds_lvl5_value",0) + 5
+                                info["f_diamonds_lvl5_count"] = info.get("f_diamonds_lvl5_count",0) + 1
+                                info["f_diamonds_lvl5_value"] = info.get("f_diamonds_lvl5_value",0) + 10
                             if level==6:
-                                info["diamonds_lvl6_count"] = info.get("diamonds_lvl6_count",0) + 1
-                                info["diamonds_lvl6_value"] = info.get("diamonds_lvl6_value",0) + 10
+                                info["f_diamonds_lvl6_count"] = info.get("f_diamonds_lvl6_count",0) + 1
+                                info["f_diamonds_lvl6_value"] = info.get("f_diamonds_lvl6_value",0) + 25
                             post_scores[post_hash_hex][username] = post_scores[post_hash_hex].get(username, {})
                             post_scores[post_hash_hex][username]["diamond"] = post_scores[post_hash_hex][username].get("diamond", 0) + diamond_level_score
          
@@ -680,8 +680,17 @@ def calculate_stats(username,user_pubkey,post_hash,NUM_POSTS_TO_FETCH,number_top
         "💎💎💎 : "+str(info.get("diamonds_lvl3_count",0))+" ($"+str(round(info.get("diamonds_lvl3_value",0),3))+")\n"+ \
         "💎💎💎💎 : "+str(info.get("diamonds_lvl4_count",0))+" ($"+str(round(info.get("diamonds_lvl4_value",0),3))+")\n"+ \
         "💎💎💎💎💎 : "+str(info.get("diamonds_lvl5_count",0))+" ($"+str(round(info.get("diamonds_lvl5_value",0),3))+")\n"+ \
-        "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+" ($"+str(round(info.get("diamonds_lvl6_value",0),3))+")\n\n"\
-        "Total : $"+str(round(info.get("diamonds_lvl1_value",0)+info.get("diamonds_lvl2_value",0)+info.get("diamonds_lvl3_value",0)+info.get("diamonds_lvl4_value",0)+info.get("diamonds_lvl5_value",0)+info.get("diamonds_lvl6_value",0),3))+"\n\n"
+        "💎💎💎💎💎💎 : "+str(info.get("diamonds_lvl6_count",0))+" ($"+str(round(info.get("diamonds_lvl6_value",0),3))+")\n"\
+        "Total : $"+str(round(info.get("diamonds_lvl1_value",0)+info.get("diamonds_lvl2_value",0)+info.get("diamonds_lvl3_value",0)+info.get("diamonds_lvl4_value",0)+info.get("diamonds_lvl5_value",0)+info.get("diamonds_lvl6_value",0),3))+"\n\n"\
+        "Focus App Diamonds\n"\
+        "💎 : "+str(info.get("f_diamonds_lvl1_count",0))+" ($"+str(round(info.get("f_diamonds_lvl1_value",0),3))+")\n"+ \
+        "💎💎 : "+str(info.get("f_diamonds_lvl2_count",0))+" ($"+str(round(info.get("f_diamonds_lvl2_value",0),3))+")\n"+ \
+        "💎💎💎 : "+str(info.get("f_diamonds_lvl3_count",0))+" ($"+str(round(info.get("f_diamonds_lvl3_value",0),3))+")\n"+ \
+        "💎💎💎💎 : "+str(info.get("f_diamonds_lvl4_count",0))+" ($"+str(round(info.get("f_diamonds_lvl4_value",0),3))+")\n"+ \
+        "💎💎💎💎💎 : "+str(info.get("f_diamonds_lvl5_count",0))+" ($"+str(round(info.get("f_diamonds_lvl5_value",0),3))+")\n"+ \
+        "💎💎💎💎💎💎 : "+str(info.get("f_diamonds_lvl6_count",0))+" ($"+str(round(info.get("f_diamonds_lvl6_value",0),3))+")\n"\
+        "Total : $"+str(round(info.get("f_diamonds_lvl1_value",0)+info.get("f_diamonds_lvl2_value",0)+info.get("f_diamonds_lvl3_value",0)+info.get("f_diamonds_lvl4_value",0)+info.get("f_diamonds_lvl5_value",0)+info.get("f_diamonds_lvl6_value",0),3))+"\n\n"\
+        "DeSo Exchange Rate: $"+str(round(USDCentsPerDeSoExchangeRate/100,2))+"\n\n"
         if days>0:
             body+="🏆 "+username + "'s Top " +str(number_top_users)+ " Engaged Users (Last " +str(days)+ " Days) 🏆\n"
         else:
